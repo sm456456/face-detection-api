@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/sm456456/face-detection-api/issues"
   },
-  "homepage": "https://github.com/sm456456/face-detection-api#readme"
+  "homepage": "https://github.com/sm456456/face-detection-api#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
