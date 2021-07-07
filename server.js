@@ -79,7 +79,7 @@ app.post("/signin", (req, res) => {
   ) {
     res.json("success")
   } else {
-    res.status(400).json("error loggin in")
+    res.status(400).json("wrong credentials")
   }
 })
 
