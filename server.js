@@ -1,29 +1,8 @@
 const express = require("express")
 const cors = require("cors")
 const knex = require("knex")
-
-// const saltRounds = 10
-
-// const database = {
-//   users: [
-//     {
-//       id: "123",
-//       name: "John",
-//       email: "john@email.com",
-//       password: "me",
-//       entries: 0,
-//       joined: new Date()
-//     },
-//     {
-//       id: "124",
-//       name: "Selma",
-//       email: "selma@email.com",
-//       password: "mee",
-//       entries: 0,
-//       joined: new Date()
-//     }
-//   ]
-// }
+const bcrypt = require("bcrypt")
+const saltRounds = 10
 
 const db = knex({
   client: "pg",
@@ -72,23 +51,26 @@ app.get("/", (req, res) => {
 //   // result == false
 // });
 
+// bcrypt
+//   .compare(
+//     "ann",
+//     "$2b$10$OfzVLidJzKAx8ExXspht.uCSb/owUgxIRYGhuep2KTmE4g1xRcLXG"
+//   )
+//   .then(function (res) {
+//     console.log("first guess", res)
+//   })
+// bcrypt
+//   .compare(
+//     "you",
+//     "$2b$10$OfzVLidJzKAx8ExXspht.uCSb/owUgxIRYGhuep2KTmE4g1xRcLXG"
+//   )
+//   .then(function (res) {
+//     console.log("second guess", res)
+//   })
 app.post("/signin", (req, res) => {
-  // bcrypt
-  //   .compare(
-  //     "ann",
-  //     "$2b$10$OfzVLidJzKAx8ExXspht.uCSb/owUgxIRYGhuep2KTmE4g1xRcLXG"
-  //   )
-  //   .then(function (res) {
-  //     console.log("first guess", res)
-  //   })
-  // bcrypt
-  //   .compare(
-  //     "you",
-  //     "$2b$10$OfzVLidJzKAx8ExXspht.uCSb/owUgxIRYGhuep2KTmE4g1xRcLXG"
-  //   )
-  //   .then(function (res) {
-  //     console.log("second guess", res)
-  //   })
+  const { email, name, password } = req.body
+  const hash = bcrypt.hashSync(myPlaintextPassword, saltRounds)
+
   if (
     req.body.email === database.users[0].email &&
     req.body.password === database.users[0].password
@@ -101,24 +83,30 @@ app.post("/signin", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, name, password } = req.body
-  // bcrypt.hash(password, saltRounds).then(function (hash) {
-  //   console.log(hash)
-  // })
-  db("users")
-    .returning("*")
-    .insert({
-      email: email,
-      name: name,
-      joined: new Date()
-    })
-    .then(user => {
-      if (user.length) {
-        res.json(user[0])
-      } else {
-        throw new Error("User doesn't exist")
-      }
-    })
-    .catch(err => res.status(400).json("Unable to register"))
+  const hash = bcrypt.hashSync(password, saltRounds)
+  db.transaction(trx => {
+    trx
+      .insert({
+        hash: hash,
+        email: email
+      })
+      .into("login")
+      .returning("email")
+      .then(loginEmail => {
+        return trx("users")
+          .returning("*")
+          .insert({
+            email: loginEmail[0],
+            name: name,
+            joined: new Date()
+          })
+          .then(user => {
+            res.json(user[0])
+          })
+      })
+      .then(trx.commit)
+      .catch(trx.rollback)
+  }).catch(err => res.status(400).json("unable to register"))
 })
 
 app.get("/profile/:id", (req, res) => {
