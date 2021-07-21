@@ -29,56 +29,26 @@ app.get("/", (req, res) => {
   res.send(database.users)
 })
 
-// bcrypt.hash("bacon", null, null, function(err, hash) {
-//   // Store hash in your password DB.
-// });
-// // Load hash from your password DB.
-// bcrypt.compare("bacon", hash, function(err, res) {
-//   // res == true
-// });
-// bcrypt.compare("veggies", hash, function(err, res) {
-//   // res = false
-// });
-
-// bcrypt.hash(myPlaintextPassword, saltRounds, function(err, hash) {
-//   // Store hash in your password DB.
-// });
-// // Load hash from your password DB.
-// bcrypt.compare(myPlaintextPassword, hash, function(err, result) {
-//   // result == true
-// });
-// bcrypt.compare(someOtherPlaintextPassword, hash, function(err, result) {
-//   // result == false
-// });
-
-// bcrypt
-//   .compare(
-//     "ann",
-//     "$2b$10$OfzVLidJzKAx8ExXspht.uCSb/owUgxIRYGhuep2KTmE4g1xRcLXG"
-//   )
-//   .then(function (res) {
-//     console.log("first guess", res)
-//   })
-// bcrypt
-//   .compare(
-//     "you",
-//     "$2b$10$OfzVLidJzKAx8ExXspht.uCSb/owUgxIRYGhuep2KTmE4g1xRcLXG"
-//   )
-//   .then(function (res) {
-//     console.log("second guess", res)
-//   })
 app.post("/signin", (req, res) => {
-  const { email, name, password } = req.body
-  const hash = bcrypt.hashSync(myPlaintextPassword, saltRounds)
-
-  if (
-    req.body.email === database.users[0].email &&
-    req.body.password === database.users[0].password
-  ) {
-    res.json("success")
-  } else {
-    res.status(400).json("wrong credentials")
-  }
+  db.select("email", "hash")
+    .from("login")
+    .where("email", "=", req.body.email)
+    .then(data => {
+      const isValid = bcrypt.compareSync(req.body.password, data[0].hash)
+      if (isValid) {
+        return db
+          .select("*")
+          .from("users")
+          .where("email", "=", req.body.email)
+          .then(user => {
+            res.json(user[0])
+          })
+          .catch(err => res.status(400).json("unable to get user"))
+      } else {
+        res.status(400).json("wrong credentials")
+      }
+    })
+    .catch(err => res.status(400).json("wrong credentials"))
 })
 
 app.post("/register", (req, res) => {
