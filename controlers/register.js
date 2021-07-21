@@ -1,5 +1,8 @@
 const handleRegister = (req, res, db, bcrypt, saltRounds) => {
   const { email, name, password } = req.body
+  if (!email || !name || !password) {
+    return res.status(400).json("incorrect name or email or password")
+  }
   const hash = bcrypt.hashSync(password, saltRounds)
   db.transaction(trx => {
     trx
@@ -27,5 +30,5 @@ const handleRegister = (req, res, db, bcrypt, saltRounds) => {
 }
 
 module.exports = {
-  handleRegister: handleRegister
+  handleRegister
 }
