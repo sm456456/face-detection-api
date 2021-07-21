@@ -6,6 +6,7 @@ const saltRounds = 10
 const register = require("./controlers/register")
 const signin = require("./controlers/signin")
 const profile = require("./controlers/profile")
+const image = require("./controlers/image")
 
 const db = knex({
   client: "pg",
@@ -28,10 +29,6 @@ app.use(cors())
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
-app.get("/", (req, res) => {
-  res.send(database.users)
-})
-
 app.post("/signin", (req, res) => {
   signin.handleSignin(req, res, db, bcrypt)
 })
@@ -45,15 +42,7 @@ app.get("/profile/:id", (req, res) => {
 })
 
 app.put("/image", (req, res) => {
-  const { id } = req.body
-  db("users")
-    .where("id", "=", id)
-    .increment("entries", 1)
-    .returning("entries")
-    .then(entries => {
-      res.json(entries[0])
-    })
-    .catch(err => res.status(400).json("unable to get entries"))
+  image.handleImage(req, res, db)
 })
 
 app.listen(3000, () => {
