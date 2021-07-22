@@ -50,5 +50,5 @@ app.post("/imageurl", (req, res) => {
 })
 
 app.listen(3000, () => {
-  console.log("app is running on port 3000")
+  console.log(`Server is listening onn port 3000`)
 })
